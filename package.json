@@ -1,5 +1,5 @@
 {
-  "name": "demo",
+  "name": "flashcamera",
   "version": "0.0.1",
   "private": true,
   "scripts": {
@@ -7,7 +7,8 @@
     "ios": "react-native run-ios",
     "start": "react-native start",
     "test": "jest",
-    "lint": "eslint ."
+    "lint": "eslint .",
+    "android:apk": "cd android && ./gradlew assembleRelease && adb -d install app/build/outputs/apk/release/app-release.apk"
   },
   "dependencies": {
     "@ant-design/react-native": "^5.0.2",
