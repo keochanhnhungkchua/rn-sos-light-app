@@ -1,11 +1,11 @@
 import React from 'react';
 import {SafeAreaView} from 'react-native';
-import FlashCamera from './src/screens/FlashCamera';
+import MapRN from './src/screens/MapRN';
 
 const App = () => {
   return (
     <SafeAreaView>
-      <FlashCamera />
+      <MapRN />
     </SafeAreaView>
   );
 };

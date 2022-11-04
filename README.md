@@ -1,1 +1,1 @@
-# rn-sos-light-app
+# get location mobile

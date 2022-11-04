@@ -63,3 +63,5 @@ buck-out/
 /ios/Pods/
 /vendor/bundle/
 yarn.lock
+.env
+.env.dev
