@@ -1,20 +1,10 @@
-import React, {useEffect, useRef, useState} from 'react';
-import {
-  SafeAreaView,
-  ScrollView,
-  StyleSheet,
-  Text,
-  View,
-  TouchableOpacity,
-  TextInput,
-} from 'react-native';
+import React, {useEffect, useState} from 'react';
+import {StyleSheet, Text, View, TextInput, Image} from 'react-native';
 import Geolocation from '@react-native-community/geolocation';
-import MapView, {
-  PROVIDER_GOOGLE,
-  Marker,
-  MarkerAnimated,
-} from 'react-native-maps';
+import MapView, {PROVIDER_GOOGLE, Marker, Polyline} from 'react-native-maps';
 import {GooglePlacesAutocomplete} from 'react-native-google-places-autocomplete';
+import Config from 'react-native-config';
+
 const homePlace = {
   description: 'Home',
   geometry: {location: {lat: 48.8152937, lng: 2.4597668}},
@@ -23,43 +13,50 @@ const workPlace = {
   description: 'Work',
   geometry: {location: {lat: 48.8496818, lng: 2.2940881}},
 };
+
 const MapRN = () => {
   const [currentLocation, setCurrentLocation] = useState({
-    latitude: 10,
-    longitude: 10,
-    latitudeDelta: 0,
-    longitudeDelta: 0.05,
+    latitude: 0,
+    longitude: 0,
+    latitudeDelta: 1,
+    longitudeDelta: 1,
   });
-  const [distance, setDistance] = useState(500);
   const [pin, setPin] = useState({
-    latitude: 37.78825,
-    longitude: -122.4324,
+    latitude: 0,
+    longitude: 0,
+    latitudeDelta: 1,
+    longitudeDelta: 1,
   });
+  const [distance, setDistance] = useState(0.5);
+  const [curentDistance, setCurentDistance] = useState(0);
 
-  const delay = delay => {
-    return new Promise(resolve => setTimeout(resolve, delay * 1000));
-  };
-
-  const d1 = 21.23041507658777;
-  const l1 = 105.52999511508325;
   function degreesToRadians(degrees) {
     return (degrees * Math.PI) / 180;
   }
-
-  function distanceInKmBetweenEarthCoordinates(lat1, lon1, lat2, lon2) {
+  function distanceInKmBetweenEarthCoordinates(
+    latitude1,
+    longitude1,
+    latitude2,
+    longitude2,
+  ) {
     var earthRadiusKm = 6371;
 
-    var dLat = degreesToRadians(lat2 - lat1);
-    var dLon = degreesToRadians(lon2 - lon1);
+    var dLat = degreesToRadians(latitude2 - latitude1);
+    var dLon = degreesToRadians(longitude2 - longitude1);
 
-    lat1 = degreesToRadians(lat1);
-    lat2 = degreesToRadians(lat2);
+    latitude1 = degreesToRadians(latitude1);
+    latitude2 = degreesToRadians(latitude2);
 
     var a =
       Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-      Math.sin(dLon / 2) * Math.sin(dLon / 2) * Math.cos(lat1) * Math.cos(lat2);
+      Math.sin(dLon / 2) *
+        Math.sin(dLon / 2) *
+        Math.cos(latitude1) *
+        Math.cos(latitude2);
     var c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-    return (earthRadiusKm * c).toFixed(2);
+    console.log((earthRadiusKm * c).toFixed(2), 'km');
+    setCurentDistance((earthRadiusKm * c).toFixed(2));
+    return (earthRadiusKm * c).toFixed(2) < distance; // to km
   }
 
   const handlePressOnOff = async () => {
@@ -72,11 +69,22 @@ const MapRN = () => {
         };
 
         setCurrentLocation(newLocation);
+        setPin(newLocation);
       });
     } catch (error) {
       console.log(error.message);
     }
   };
+  useEffect(() => {
+    console.log(
+      distanceInKmBetweenEarthCoordinates(
+        currentLocation.latitude,
+        currentLocation.longitude,
+        pin.latitude,
+        pin.longitude,
+      ),
+    );
+  }, [pin, distance, currentLocation]);
 
   useEffect(() => {
     handlePressOnOff();
@@ -112,9 +120,9 @@ const MapRN = () => {
           autoFocus={false}
           returnKeyType={'default'}
           fetchDetails={true}
-          placeholder="Search"
+          placeholder="Search...coming soon"
           query={{
-            key: 'AIzaSyDC8wuryEBM0YTH7XXCQZnGuc-jKY3p8Fg',
+            key: Config.GOOGLE_SEARCH_PLACE_API_KEY,
             language: 'en', // language of the results
           }}
           onPress={(data, details = null) => console.log(data)}
@@ -129,20 +137,38 @@ const MapRN = () => {
         region={currentLocation}
         showsUserLocation={true}
         showsMyLocationButton={true}
-        toolbarEnabled={true}
+        // toolbarEnabled={true}
         followsUserLocation={true}
         // onUserLocationChange={e => console.log(e.nativeEvent.coordinate)}
         onLongPress={e => {
           setPin(e.nativeEvent.coordinate);
         }}>
+        <Polyline
+          strokeColor="red"
+          strokeWidth={3}
+          geodesic={true}
+          tappable={true}
+          coordinates={[currentLocation, pin]}
+        />
+
         <Marker
+          pinColor="red"
           title={'Your location'}
           draggable
           coordinate={pin}
           onDragEnd={e => {
             setPin(e.nativeEvent.coordinate);
-          }}
-        />
+          }}>
+          <View>
+            <Text style={{color: 'red', fontWeight: '600'}}>
+              {curentDistance}km
+            </Text>
+            <Image
+              style={styles.googleMapsPin}
+              source={require('../../assets/images/googleMapsPin.png')}
+            />
+          </View>
+        </Marker>
       </MapView>
     </View>
   );
@@ -179,6 +205,11 @@ const styles = StyleSheet.create({
   map: {
     width: '100%',
     height: '100%',
+  },
+  googleMapsPin: {
+    width: 20,
+    height: 30,
+    marginLeft: 12,
   },
 });
 
