@@ -1,5 +1,5 @@
 import React, {useEffect, useState} from 'react';
-import {StyleSheet, Text, View, TextInput, Image} from 'react-native';
+import {StyleSheet, Text, View, Image, Button} from 'react-native';
 import Geolocation from '@react-native-community/geolocation';
 import MapView, {PROVIDER_GOOGLE, Marker, Polyline} from 'react-native-maps';
 import {GooglePlacesAutocomplete} from 'react-native-google-places-autocomplete';
@@ -14,7 +14,7 @@ const workPlace = {
   geometry: {location: {lat: 48.8496818, lng: 2.2940881}},
 };
 
-const MapRN = () => {
+const MapRN = ({navigation}) => {
   const [currentLocation, setCurrentLocation] = useState({
     latitude: 0,
     longitude: 0,
@@ -104,6 +104,7 @@ const MapRN = () => {
             value={distance}
             placeholder="Distance in meters"
           /> */}
+
         <GooglePlacesAutocomplete
           styles={{
             textInput: {
@@ -137,9 +138,8 @@ const MapRN = () => {
         region={currentLocation}
         showsUserLocation={true}
         showsMyLocationButton={true}
-        // toolbarEnabled={true}
+        toolbarEnabled={true}
         followsUserLocation={true}
-        // onUserLocationChange={e => console.log(e.nativeEvent.coordinate)}
         onLongPress={e => {
           setPin(e.nativeEvent.coordinate);
         }}>
