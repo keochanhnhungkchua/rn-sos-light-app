@@ -22,7 +22,7 @@ const App = () => {
           name="Home"
           component={FlashCamera}
           options={{
-            tabBarBadge: 3,
+            // tabBarBadge: 3,
             tabBarIcon: ({color, size}) => (
               <MaterialCommunityIcons
                 name="flashlight"

@@ -4,6 +4,7 @@ import Geolocation from '@react-native-community/geolocation';
 import MapView, {PROVIDER_GOOGLE, Marker, Polyline} from 'react-native-maps';
 import {GooglePlacesAutocomplete} from 'react-native-google-places-autocomplete';
 import Config from 'react-native-config';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const homePlace = {
   description: 'Home',
@@ -14,21 +15,39 @@ const workPlace = {
   geometry: {location: {lat: 48.8496818, lng: 2.2940881}},
 };
 
-const MapRN = ({navigation}) => {
+const MapRN = () => {
   const [currentLocation, setCurrentLocation] = useState({
     latitude: 0,
     longitude: 0,
-    latitudeDelta: 1,
-    longitudeDelta: 1,
+    latitudeDelta: 0.05,
+    longitudeDelta: 0.05,
   });
   const [pin, setPin] = useState({
     latitude: 0,
     longitude: 0,
-    latitudeDelta: 1,
-    longitudeDelta: 1,
+    latitudeDelta: 0.05,
+    longitudeDelta: 0.05,
   });
+
   const [distance, setDistance] = useState(0.5);
   const [curentDistance, setCurentDistance] = useState(0);
+
+  const storeAsyncStorageData = async value => {
+    try {
+      const jsonValue = JSON.stringify(value);
+      await AsyncStorage.setItem('userLocation', jsonValue);
+    } catch (e) {
+      console.log(e);
+    }
+  };
+  const getAsyncStorageData = async () => {
+    try {
+      const jsonValue = await AsyncStorage.getItem('userLocation');
+      return jsonValue != null ? JSON.parse(jsonValue) : null;
+    } catch (e) {
+      // error reading value
+    }
+  };
 
   function degreesToRadians(degrees) {
     return (degrees * Math.PI) / 180;
@@ -54,7 +73,6 @@ const MapRN = ({navigation}) => {
         Math.cos(latitude1) *
         Math.cos(latitude2);
     var c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-    console.log((earthRadiusKm * c).toFixed(2), 'km');
     setCurentDistance((earthRadiusKm * c).toFixed(2));
     return (earthRadiusKm * c).toFixed(2) < distance; // to km
   }
@@ -69,25 +87,30 @@ const MapRN = ({navigation}) => {
         };
 
         setCurrentLocation(newLocation);
-        setPin(newLocation);
+        // setPin(newLocation);
       });
     } catch (error) {
       console.log(error.message);
     }
   };
   useEffect(() => {
-    console.log(
-      distanceInKmBetweenEarthCoordinates(
-        currentLocation.latitude,
-        currentLocation.longitude,
-        pin.latitude,
-        pin.longitude,
-      ),
+    distanceInKmBetweenEarthCoordinates(
+      currentLocation.latitude,
+      currentLocation.longitude,
+      pin.latitude,
+      pin.longitude,
     );
   }, [pin, distance, currentLocation]);
 
   useEffect(() => {
     handlePressOnOff();
+
+    const getData = async () => {
+      const location = await getAsyncStorageData();
+      console.log(location);
+      setPin(location);
+    };
+    getData();
   }, []);
 
   return (
@@ -142,6 +165,7 @@ const MapRN = ({navigation}) => {
         followsUserLocation={true}
         onLongPress={e => {
           setPin(e.nativeEvent.coordinate);
+          storeAsyncStorageData(e.nativeEvent.coordinate);
         }}>
         <Polyline
           strokeColor="red"
@@ -158,6 +182,7 @@ const MapRN = ({navigation}) => {
           coordinate={pin}
           onDragEnd={e => {
             setPin(e.nativeEvent.coordinate);
+            storeAsyncStorageData(e.nativeEvent.coordinate);
           }}>
           <View>
             <Text style={{color: 'red', fontWeight: '600'}}>

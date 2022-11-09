@@ -11,6 +11,7 @@
     "android:apk": "cd android && ./gradlew assembleRelease && adb -d install app/build/outputs/apk/release/app-release.apk"
   },
   "dependencies": {
+    "@react-native-async-storage/async-storage": "^1.17.10",
     "@react-native-community/geolocation": "^3.0.3",
     "@react-navigation/bottom-tabs": "^6.4.0",
     "@react-navigation/native": "^6.0.13",

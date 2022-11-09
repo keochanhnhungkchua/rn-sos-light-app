@@ -56,12 +56,10 @@ const FlashCamera = () => {
 
 const styles = StyleSheet.create({
   sectionContainer: {
-    display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    flexDirection: 'column',
-    width: '100%',
-    height: '100%',
+    flex: 1,
+    backgroundColor: '#eee',
   },
   button: {
     backgroundColor: '#2196f3',
