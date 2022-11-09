@@ -3,7 +3,9 @@ apply from: file("../node_modules/@react-native-community/cli-platform-android/n
 include ':app'
 includeBuild('../node_modules/react-native-gradle-plugin')
 include ':react-native-config'
+include ':react-native-html-to-pdf'
 
+project(':react-native-html-to-pdf').projectDir = new File(rootProject.projectDir,'../node_modules/react-native-html-to-pdf/android')
 project(':react-native-config').projectDir = new File(rootProject.projectDir, '../node_modules/react-native-config/android')
 
 if (settings.hasProperty("newArchEnabled") && settings.newArchEnabled == "true") {

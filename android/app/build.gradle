@@ -251,6 +251,7 @@ android {
 dependencies {
     implementation fileTree(dir: "libs", include: ["*.jar"])
     implementation project(':react-native-config')
+    implementation project(':react-native-html-to-pdf')
     // Google Play Services Fused Location 
     implementation "com.google.android.gms:play-services-base:16.0.1"
     implementation "com.google.android.gms:play-services-location:16.0.0"
