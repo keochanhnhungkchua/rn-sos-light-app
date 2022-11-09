@@ -1,19 +1,20 @@
 import React, {useEffect, useState} from 'react';
-import {StyleSheet, Text, View, Image, Button} from 'react-native';
+import {StyleSheet, Text, View, Image, Button, TextInput} from 'react-native';
 import Geolocation from '@react-native-community/geolocation';
 import MapView, {PROVIDER_GOOGLE, Marker, Polyline} from 'react-native-maps';
 import {GooglePlacesAutocomplete} from 'react-native-google-places-autocomplete';
 import Config from 'react-native-config';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 
-const homePlace = {
-  description: 'Home',
-  geometry: {location: {lat: 48.8152937, lng: 2.4597668}},
-};
-const workPlace = {
-  description: 'Work',
-  geometry: {location: {lat: 48.8496818, lng: 2.2940881}},
-};
+// const homePlace = {
+//   description: 'Home',
+//   geometry: {location: {lat: 48.8152937, lng: 2.4597668}},
+// };
+// const workPlace = {
+//   description: 'Work',
+//   geometry: {location: {lat: 48.8496818, lng: 2.2940881}},
+// };
 
 const MapRN = () => {
   const [currentLocation, setCurrentLocation] = useState({
@@ -28,51 +29,59 @@ const MapRN = () => {
     latitudeDelta: 0.05,
     longitudeDelta: 0.05,
   });
-
   const [distance, setDistance] = useState(0.5);
   const [curentDistance, setCurentDistance] = useState(0);
 
-  const storeAsyncStorageData = async value => {
+  const asyncStorageData = async (key, value) => {
     try {
-      const jsonValue = JSON.stringify(value);
-      await AsyncStorage.setItem('userLocation', jsonValue);
+      if (key === 'userLocation') {
+        const jsonValue = JSON.stringify(value);
+        await AsyncStorage.setItem(key, jsonValue);
+      } else {
+        await AsyncStorage.setItem(key, value);
+      }
     } catch (e) {
       console.log(e);
     }
   };
-  const getAsyncStorageData = async () => {
+  const getAsyncStorageData = async key => {
     try {
-      const jsonValue = await AsyncStorage.getItem('userLocation');
-      return jsonValue != null ? JSON.parse(jsonValue) : null;
+      if (key === 'userLocation') {
+        const jsonValue = await AsyncStorage.getItem(key);
+        return jsonValue != null ? JSON.parse(jsonValue) : null;
+      } else {
+        const value = await AsyncStorage.getItem(key);
+        return value != null ? value : null;
+      }
     } catch (e) {
       // error reading value
     }
   };
 
-  function degreesToRadians(degrees) {
-    return (degrees * Math.PI) / 180;
-  }
-  function distanceInKmBetweenEarthCoordinates(
-    latitude1,
-    longitude1,
-    latitude2,
-    longitude2,
-  ) {
-    var earthRadiusKm = 6371;
+  function distanceInKmBetweenEarthCoordinates() {
+    function degreesToRadians(degrees) {
+      return (degrees * Math.PI) / 180;
+    }
+    let latitude1 = currentLocation.latitude;
+    let longitude1 = currentLocation.longitude;
+    let latitude2 = pin.latitude;
+    let longitude2 = pin.longitude;
 
-    var dLat = degreesToRadians(latitude2 - latitude1);
-    var dLon = degreesToRadians(longitude2 - longitude1);
+    const earthRadiusKm = 6371;
+
+    const dLat = degreesToRadians(latitude2 - latitude1);
+    const dLon = degreesToRadians(longitude2 - longitude1);
 
     latitude1 = degreesToRadians(latitude1);
     latitude2 = degreesToRadians(latitude2);
 
-    var a =
+    const a =
       Math.sin(dLat / 2) * Math.sin(dLat / 2) +
       Math.sin(dLon / 2) *
         Math.sin(dLon / 2) *
         Math.cos(latitude1) *
         Math.cos(latitude2);
-    var c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
     setCurentDistance((earthRadiusKm * c).toFixed(2));
     return (earthRadiusKm * c).toFixed(2) < distance; // to km
   }
@@ -87,27 +96,21 @@ const MapRN = () => {
         };
 
         setCurrentLocation(newLocation);
-        // setPin(newLocation);
       });
     } catch (error) {
       console.log(error.message);
     }
   };
   useEffect(() => {
-    distanceInKmBetweenEarthCoordinates(
-      currentLocation.latitude,
-      currentLocation.longitude,
-      pin.latitude,
-      pin.longitude,
-    );
+    distanceInKmBetweenEarthCoordinates();
   }, [pin, distance, currentLocation]);
 
   useEffect(() => {
     handlePressOnOff();
-
     const getData = async () => {
-      const location = await getAsyncStorageData();
-      console.log(location);
+      const location = await getAsyncStorageData('userLocation');
+      const getDistanceSave = await getAsyncStorageData('distanceSave');
+      setDistance(getDistanceSave);
       setPin(location);
     };
     getData();
@@ -117,16 +120,20 @@ const MapRN = () => {
     <View>
       <View
         style={{
-          height: 60,
+          height: 100,
           padding: 10,
         }}>
-        {/* 
-          <TextInput
-            style={styles.input}
-            onChangeText={setDistance}
-            value={distance}
-            placeholder="Distance in meters"
-          /> */}
+        <TextInput
+          style={styles.input}
+          onChangeText={text => {
+            setDistance(text);
+            asyncStorageData('distanceSave', `${text}`);
+          }}
+          value={distance}
+          // defaultValue="0.5"
+          placeholder="Distance in km"
+          keyboardType="numeric"
+        />
 
         <GooglePlacesAutocomplete
           styles={{
@@ -151,7 +158,7 @@ const MapRN = () => {
           }}
           onPress={(data, details = null) => console.log(data)}
           onFail={error => console.error(error)}
-          predefinedPlaces={[homePlace, workPlace]}
+          // predefinedPlaces={[homePlace, workPlace]}
         />
       </View>
 
@@ -165,10 +172,10 @@ const MapRN = () => {
         followsUserLocation={true}
         onLongPress={e => {
           setPin(e.nativeEvent.coordinate);
-          storeAsyncStorageData(e.nativeEvent.coordinate);
+          asyncStorageData('userLocation', e.nativeEvent.coordinate);
         }}>
         <Polyline
-          strokeColor="red"
+          strokeColor={curentDistance < distance ? 'green' : 'red'}
           strokeWidth={3}
           geodesic={true}
           tappable={true}
@@ -182,16 +189,29 @@ const MapRN = () => {
           coordinate={pin}
           onDragEnd={e => {
             setPin(e.nativeEvent.coordinate);
-            storeAsyncStorageData(e.nativeEvent.coordinate);
+            asyncStorageData('userLocation', e.nativeEvent.coordinate);
           }}>
           <View>
-            <Text style={{color: 'red', fontWeight: '600'}}>
+            <Text
+              style={{
+                color: curentDistance < distance ? 'blue' : 'red',
+                fontWeight: '800',
+              }}>
               {curentDistance}km
             </Text>
-            <Image
-              style={styles.googleMapsPin}
-              source={require('../../assets/images/googleMapsPin.png')}
-            />
+            {curentDistance < distance ? (
+              <MaterialCommunityIcons
+                name="google-maps"
+                color="green"
+                size={30}
+              />
+            ) : (
+              <MaterialCommunityIcons
+                name="google-maps"
+                color="red"
+                size={30}
+              />
+            )}
           </View>
         </Marker>
       </MapView>
@@ -222,10 +242,15 @@ const styles = StyleSheet.create({
     padding: 5,
   },
   input: {
-    flex: 1,
-    height: 40,
+    height: 38,
+    color: '#5d5d5d',
+    fontSize: 16,
+    borderColor: '#999',
     borderWidth: 1,
-    marginRight: 10,
+    paddingTop: 10,
+    paddingHorizontal: 20,
+    borderRadius: 5,
+    marginBottom: 10,
   },
   map: {
     width: '100%',
