@@ -1,19 +1,19 @@
 import React, {useEffect, useState} from 'react';
-import {StyleSheet, Text, View, Image, Button} from 'react-native';
+import {StyleSheet, Text, View, Image, Button, TextInput} from 'react-native';
 import Geolocation from '@react-native-community/geolocation';
 import MapView, {PROVIDER_GOOGLE, Marker, Polyline} from 'react-native-maps';
 import {GooglePlacesAutocomplete} from 'react-native-google-places-autocomplete';
 import Config from 'react-native-config';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const homePlace = {
-  description: 'Home',
-  geometry: {location: {lat: 48.8152937, lng: 2.4597668}},
-};
-const workPlace = {
-  description: 'Work',
-  geometry: {location: {lat: 48.8496818, lng: 2.2940881}},
-};
+// const homePlace = {
+//   description: 'Home',
+//   geometry: {location: {lat: 48.8152937, lng: 2.4597668}},
+// };
+// const workPlace = {
+//   description: 'Work',
+//   geometry: {location: {lat: 48.8496818, lng: 2.2940881}},
+// };
 
 const MapRN = () => {
   const [currentLocation, setCurrentLocation] = useState({
@@ -28,22 +28,30 @@ const MapRN = () => {
     latitudeDelta: 0.05,
     longitudeDelta: 0.05,
   });
-
   const [distance, setDistance] = useState(0.5);
   const [curentDistance, setCurentDistance] = useState(0);
 
-  const storeAsyncStorageData = async value => {
+  const asyncStorageData = async (key, value) => {
     try {
-      const jsonValue = JSON.stringify(value);
-      await AsyncStorage.setItem('userLocation', jsonValue);
+      if (key === 'userLocation') {
+        const jsonValue = JSON.stringify(value);
+        await AsyncStorage.setItem(key, jsonValue);
+      } else {
+        await AsyncStorage.setItem(key, value);
+      }
     } catch (e) {
       console.log(e);
     }
   };
-  const getAsyncStorageData = async () => {
+  const getAsyncStorageData = async key => {
     try {
-      const jsonValue = await AsyncStorage.getItem('userLocation');
-      return jsonValue != null ? JSON.parse(jsonValue) : null;
+      if (key === 'userLocation') {
+        const jsonValue = await AsyncStorage.getItem(key);
+        return jsonValue != null ? JSON.parse(jsonValue) : null;
+      } else {
+        const value = await AsyncStorage.getItem(key);
+        return value != null ? value : null;
+      }
     } catch (e) {
       // error reading value
     }
@@ -87,7 +95,6 @@ const MapRN = () => {
         };
 
         setCurrentLocation(newLocation);
-        // setPin(newLocation);
       });
     } catch (error) {
       console.log(error.message);
@@ -106,27 +113,31 @@ const MapRN = () => {
     handlePressOnOff();
 
     const getData = async () => {
-      const location = await getAsyncStorageData();
-      console.log(location);
+      const location = await getAsyncStorageData('userLocation');
+      const getDistanceSave = await getAsyncStorageData('distanceSave');
+      // await setDistance(Number(getDistanceSave));
       setPin(location);
     };
     getData();
   }, []);
-
+  console.log('distance', distance);
   return (
     <View>
       <View
         style={{
-          height: 60,
+          height: 100,
           padding: 10,
         }}>
-        {/* 
-          <TextInput
-            style={styles.input}
-            onChangeText={setDistance}
-            value={distance}
-            placeholder="Distance in meters"
-          /> */}
+        <TextInput
+          style={styles.input}
+          // onChange={e => {
+          //   setDistance(e.nativeEvent.text);
+          //   asyncStorageData('distanceSave', `${e.nativeEvent.text}`);
+          // }}
+          value={distance}
+          placeholder="Distance in km"
+          keyboardType="numeric"
+        />
 
         <GooglePlacesAutocomplete
           styles={{
@@ -151,7 +162,7 @@ const MapRN = () => {
           }}
           onPress={(data, details = null) => console.log(data)}
           onFail={error => console.error(error)}
-          predefinedPlaces={[homePlace, workPlace]}
+          // predefinedPlaces={[homePlace, workPlace]}
         />
       </View>
 
@@ -165,7 +176,7 @@ const MapRN = () => {
         followsUserLocation={true}
         onLongPress={e => {
           setPin(e.nativeEvent.coordinate);
-          storeAsyncStorageData(e.nativeEvent.coordinate);
+          asyncStorageData('userLocation', e.nativeEvent.coordinate);
         }}>
         <Polyline
           strokeColor="red"
@@ -182,7 +193,7 @@ const MapRN = () => {
           coordinate={pin}
           onDragEnd={e => {
             setPin(e.nativeEvent.coordinate);
-            storeAsyncStorageData(e.nativeEvent.coordinate);
+            asyncStorageData('userLocation', e.nativeEvent.coordinate);
           }}>
           <View>
             <Text style={{color: 'red', fontWeight: '600'}}>
@@ -222,10 +233,15 @@ const styles = StyleSheet.create({
     padding: 5,
   },
   input: {
-    flex: 1,
-    height: 40,
+    height: 38,
+    color: '#5d5d5d',
+    fontSize: 16,
+    borderColor: '#999',
     borderWidth: 1,
-    marginRight: 10,
+    paddingTop: 10,
+    paddingHorizontal: 20,
+    borderRadius: 5,
+    marginBottom: 10,
   },
   map: {
     width: '100%',
