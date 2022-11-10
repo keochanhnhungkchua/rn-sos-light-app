@@ -5,51 +5,117 @@ import {
   View,
   TouchableOpacity,
   TextInput,
+  PermissionsAndroid,
+  Image,
+  Button,
 } from 'react-native';
-import Torch from 'react-native-torch';
+import {launchCamera, launchImageLibrary} from 'react-native-image-picker';
+import DocumentPicker from 'react-native-document-picker';
 
-let handIstorch = false;
+import {post} from '../../api/api';
 
+let options = {
+  mediaType: 'mixed',
+  includeBase64: true,
+  saveToPhotos: true,
+};
 const FlashCamera = () => {
-  const [isTorchOn, setIsTorchOn] = useState(false);
-  const [time, setTime] = useState(1);
-
-  const delay = delay => {
-    return new Promise(resolve => setTimeout(resolve, delay * 1000));
-  };
-
-  const handlePressOnOff = () => {
-    setIsTorchOn(!isTorchOn);
-    handIstorch = !handIstorch;
-  };
+  const [permissionsCamera, setPermissionsCamera] = useState(false);
+  const [singleFile, setSingleFile] = useState(null);
+  const [img, setImg] = useState(null);
 
   useEffect(() => {
-    const t = async () => {
-      while (handIstorch) {
-        Torch.switchState(true);
-        await delay(time);
-        Torch.switchState(false);
+    if (!permissionsCamera) {
+      grantedcamera();
+    }
+  }, []);
+
+  const grantedcamera = async () => {
+    try {
+      const granted = await PermissionsAndroid.request(
+        PermissionsAndroid.PERMISSIONS.CAMERA,
+        {
+          title: 'App Camera Permission',
+          message: 'App needs access to your camera ',
+          buttonNeutral: 'Ask Me Later',
+          buttonNegative: 'Cancel',
+          buttonPositive: 'OK',
+        },
+      );
+      if (granted === PermissionsAndroid.RESULTS.GRANTED) {
+        console.log('Camera permission given');
+        setPermissionsCamera;
+      } else {
+        console.log('Camera permission denied');
       }
-    };
-    t();
-  }, [isTorchOn]);
+    } catch (err) {
+      console.warn(err);
+    }
+  };
+  const pikupCamera = async () => {
+    const result = await launchCamera(options);
+    setImg(result?.assets[0]);
+  };
+  const pikupImage = async () => {
+    const result = await launchImageLibrary(options);
+    console.log(result?.assets[0]);
+    setImg(result?.assets[0]);
+  };
+  const uploadFile = async () => {
+    const data = await post('', img);
+    console.log(data);
+  };
+  const selectFile = async () => {
+    // Opening Document Picker to select one file
+    try {
+      const pickerResult = await DocumentPicker.pickSingle({
+        presentationStyle: 'fullScreen',
+        copyTo: 'cachesDirectory',
+      });
+      setSingleFile([pickerResult]);
+      console.log(pickerResult);
+    } catch (e) {
+      handleError(e);
+    }
+  };
+  const handleError = e => console.log(e);
 
   return (
     <View style={styles.sectionContainer}>
-      <TextInput
-        style={styles.input}
-        onChangeText={setTime}
-        value={time}
-        placeholder="enter the number of seconds"
-        keyboardType="numeric"
-      />
-      <TouchableOpacity
-        style={styles.button}
-        onPress={() => handlePressOnOff()}>
-        <Text style={{color: 'white', textAlign: 'center'}}>
-          {handIstorch ? 'ON' : 'OFF'}
-        </Text>
-      </TouchableOpacity>
+      <View style={styles.wrapperButton}>
+        <TouchableOpacity style={styles.button} onPress={() => pikupCamera()}>
+          <Text style={{color: 'white'}}>camera</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.button} onPress={() => pikupImage()}>
+          <Text style={{color: 'white'}}>pikup Image</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.button} onPress={() => uploadFile()}>
+          <Text style={{color: 'white'}}>upload</Text>
+        </TouchableOpacity>
+        <Button
+          title="open picker for single file selection"
+          onPress={async () => {
+            try {
+              const pickerResult = await DocumentPicker.pickSingle({
+                presentationStyle: 'fullScreen',
+                copyTo: 'cachesDirectory',
+              });
+              setSingleFile([pickerResult]);
+            } catch (e) {
+              handleError(e);
+            }
+          }}
+        />
+        <Button
+          title="open picker for multi file selection"
+          onPress={() => {
+            DocumentPicker.pickMultiple()
+              .then(setSingleFile)
+              .catch(handleError);
+          }}
+        />
+      </View>
+      <Image style={styles.stretch} source={{uri: img?.uri}} />
     </View>
   );
 };
@@ -58,23 +124,31 @@ const styles = StyleSheet.create({
   sectionContainer: {
     alignItems: 'center',
     justifyContent: 'center',
-    flex: 1,
-    backgroundColor: '#eee',
+    backgroundColor: 'white',
+  },
+  wrapperButton: {
+    marginTop: 50,
+    marginBottom: 50,
   },
   button: {
-    backgroundColor: '#2196f3',
-    textAlign: 'center',
-    height: 40,
-    width: 80,
-    margin: 12,
+    backgroundColor: '#00a3f5',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    height: 60,
+    width: 100,
     padding: 10,
+    marginBottom: 20,
   },
   input: {
-    height: 40,
-    margin: 12,
+    width: 100,
+    borderBottomColor: '#009688bf',
+    borderBottomWidth: 1.5,
+    color: 'white',
+  },
+  stretch: {
     width: '80%',
-    borderWidth: 1,
-    padding: 10,
+    height: 300,
   },
 });
 
