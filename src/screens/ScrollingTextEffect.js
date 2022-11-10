@@ -11,27 +11,29 @@ import {
 import TextTicker from 'react-native-text-ticker';
 
 const ScrollingTextEffect = () => {
-  const [text, setText] = useState(null);
-  const [duration, setDuration] = useState(20000);
+  const [text, setText] = useState('');
+  const [duration, setDuration] = useState(20);
   const [fontSize, setFontSize] = useState(20);
   const [modalVisible, setModalVisible] = useState(false);
-  const handlePressOnOff = () => {
-    console.log(text);
-    console.log(duration);
-    console.log(fontSize);
-    setModalVisible(true);
+
+  const handleClear = () => {
+    setText('');
+    setDuration('');
+    setFontSize('');
   };
 
   return (
     <View style={styles.container}>
+      <Text> Input content : </Text>
       <TextInput
-        style={{width: '90%', borderWidth: 1}}
-        multiline={true}
-        numberOfLines={6}
+        style={[styles.input, {height: 'auto'}]}
+        multiline
+        numberOfLines={5}
         onChangeText={setText}
         value={text}
         placeholder="enter content"
       />
+      <Text> Input front size : </Text>
       <TextInput
         style={styles.input}
         onChangeText={setFontSize}
@@ -39,6 +41,7 @@ const ScrollingTextEffect = () => {
         placeholder="font size"
         keyboardType="numeric"
       />
+      <Text> Input speed : </Text>
       <TextInput
         style={styles.input}
         onChangeText={setDuration}
@@ -46,11 +49,17 @@ const ScrollingTextEffect = () => {
         placeholder="enter speed"
         keyboardType="numeric"
       />
-      <TouchableOpacity
-        style={styles.button}
-        onPress={() => handlePressOnOff()}>
-        <Text style={{color: 'white', textAlign: 'center'}}>OK</Text>
-      </TouchableOpacity>
+      <View style={styles.wraperButton}>
+        <TouchableOpacity
+          style={styles.button}
+          onPress={() => setModalVisible(true)}>
+          <Text style={{color: 'white', textAlign: 'center'}}>OK</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.button} onPress={() => handleClear()}>
+          <Text style={{color: 'white', textAlign: 'center'}}>CLEAR</Text>
+        </TouchableOpacity>
+      </View>
+
       {modalVisible && (
         <Modal
           animationType="slide"
@@ -63,14 +72,16 @@ const ScrollingTextEffect = () => {
             style={[styles.centeredView]}
             onPress={() => setModalVisible(!modalVisible)}>
             <TextTicker
-              style={{color: 'white', fontSize: fontSize}}
-              duration={duration}
+              style={{
+                color: 'white',
+                fontSize: Number(fontSize ? fontSize : 20),
+              }}
+              duration={duration ? duration * 1000 : 20000}
               loop
-              bounce
-              scrollSpeed={1000}
-              repeatSpacer={50}
-              marqueeDelay={1000}>
-              {text ?? 'scrolling text animation react native'}
+              bounce>
+              {text
+                ? text
+                : 'scrolling text animation react native scrolling text animation react native'}
             </TextTicker>
           </Pressable>
         </Modal>
@@ -83,7 +94,7 @@ export default ScrollingTextEffect;
 
 const styles = StyleSheet.create({
   centeredView: {
-    backgroundColor: 'red',
+    backgroundColor: 'black',
     flex: 1,
     width: '100%',
     height: '100%',
@@ -93,20 +104,24 @@ const styles = StyleSheet.create({
   },
   container: {
     flex: 1,
+    paddingHorizontal: 20,
     justifyContent: 'center',
-    alignItems: 'center',
-    // backgroundColor: 'blue',
   },
   text: {
     color: 'white',
     fontSize: 20,
   },
   input: {
-    height: 40,
+    height: 45,
     margin: 12,
     width: '90%',
     borderWidth: 1,
     padding: 10,
+  },
+  wraperButton: {
+    display: 'flex',
+    flexDirection: 'row',
+    justifyContent: 'center',
   },
   button: {
     backgroundColor: '#2196f3',
