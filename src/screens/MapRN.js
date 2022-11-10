@@ -94,13 +94,13 @@ const MapRN = () => {
           latitude: coords?.latitude,
           longitude: coords?.longitude,
         };
-
         setCurrentLocation(newLocation);
       });
     } catch (error) {
       console.log(error.message);
     }
   };
+
   useEffect(() => {
     distanceInKmBetweenEarthCoordinates();
   }, [pin, distance, currentLocation]);
@@ -109,20 +109,24 @@ const MapRN = () => {
     handlePressOnOff();
     const getData = async () => {
       const location = await getAsyncStorageData('userLocation');
+      if (location) {
+        setPin(location);
+      }
       const getDistanceSave = await getAsyncStorageData('distanceSave');
-      setDistance(getDistanceSave);
-      setPin(location);
+      if (getDistanceSave) {
+        setDistance(getDistanceSave);
+      }
     };
     getData();
   }, []);
-
   return (
     <View>
       <View
         style={{
-          height: 100,
-          padding: 10,
+          // height: 100,
+          paddingTop: 10,
         }}>
+        <Text>Setting distance to your place choose (km) :</Text>
         <TextInput
           style={styles.input}
           onChangeText={text => {
@@ -134,7 +138,7 @@ const MapRN = () => {
           placeholder="Distance in km"
           keyboardType="numeric"
         />
-
+        {/* 
         <GooglePlacesAutocomplete
           styles={{
             textInput: {
@@ -159,7 +163,7 @@ const MapRN = () => {
           onPress={(data, details = null) => console.log(data)}
           onFail={error => console.error(error)}
           // predefinedPlaces={[homePlace, workPlace]}
-        />
+        /> */}
       </View>
 
       <MapView
@@ -247,7 +251,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     borderColor: '#999',
     borderWidth: 1,
-    paddingTop: 10,
     paddingHorizontal: 20,
     borderRadius: 5,
     marginBottom: 10,

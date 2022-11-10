@@ -45,7 +45,7 @@ const App = () => {
           name="ScrollingTextEffect"
           component={ScrollingTextEffect}
           options={{
-            tabBarLabel: 'ScrollingTextEffect',
+            tabBarLabel: 'Scrolling Text',
             tabBarIcon: ({color, size}) => (
               <MaterialCommunityIcons
                 name="text-shadow"
