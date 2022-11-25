@@ -1,81 +1,59 @@
-import React, {useEffect, useState} from 'react';
-import {
-  StyleSheet,
-  Text,
-  View,
-  TouchableOpacity,
-  TextInput,
-} from 'react-native';
-import Torch from 'react-native-torch';
+import Paho from 'paho-mqtt';
 
-let handIstorch = false;
+import {useState, useEffect} from 'react';
+import {StyleSheet, Text, Button, View} from 'react-native';
 
-const FlashCamera = () => {
-  const [isTorchOn, setIsTorchOn] = useState(false);
-  const [time, setTime] = useState(1);
+client = new Paho.Client(
+  'broker.hivemq.com',
+  Number(8000),
+  `mqtt-async-test-${parseInt(Math.random() * 100)}`,
+);
+export default function App() {
+  const [value, setValue] = useState(0);
 
-  const delay = delay => {
-    return new Promise(resolve => setTimeout(resolve, delay * 1000));
-  };
-
-  const handlePressOnOff = () => {
-    setIsTorchOn(!isTorchOn);
-    handIstorch = !handIstorch;
-  };
+  function onMessage(message) {
+    if (message.destinationName === 'mqtt-async-test/value123')
+      console.log(message);
+    setValue(parseInt(message.payloadString));
+  }
 
   useEffect(() => {
-    const t = async () => {
-      while (handIstorch) {
-        Torch.switchState(true);
-        await delay(time);
-        Torch.switchState(false);
-      }
-    };
-    t();
-  }, [isTorchOn]);
+    client.connect({
+      onSuccess: () => {
+        console.log('Connected!');
+        client.subscribe('mqtt-async-test/value123');
+        client.onMessageArrived = onMessage;
+      },
+      onFailure: () => {
+        console.log('Failed to connect!');
+      },
+    });
+  }, []);
+
+  function changeValue(c) {
+    const message = new Paho.Message((value + 1).toString());
+    message.destinationName = 'mqtt-async-test/value123';
+    c.send(message);
+  }
 
   return (
-    <View style={styles.sectionContainer}>
-      <TextInput
-        style={styles.input}
-        onChangeText={setTime}
-        value={time}
-        placeholder="enter the number of seconds"
-        keyboardType="numeric"
+    <View style={styles.container}>
+      <Text>Value is: {value}</Text>
+      <Button
+        onPress={() => {
+          changeValue(client);
+        }}
+        title="Press Me"
       />
-      <TouchableOpacity
-        style={styles.button}
-        onPress={() => handlePressOnOff()}>
-        <Text style={{color: 'white', textAlign: 'center'}}>
-          {handIstorch ? 'ON' : 'OFF'}
-        </Text>
-      </TouchableOpacity>
     </View>
   );
-};
+}
 
 const styles = StyleSheet.create({
-  sectionContainer: {
+  container: {
+    flex: 1,
+    backgroundColor: '#fff',
     alignItems: 'center',
     justifyContent: 'center',
-    flex: 1,
-    backgroundColor: '#eee',
-  },
-  button: {
-    backgroundColor: '#2196f3',
-    textAlign: 'center',
-    height: 40,
-    width: 80,
-    margin: 12,
-    padding: 10,
-  },
-  input: {
-    height: 40,
-    margin: 12,
-    width: '80%',
-    borderWidth: 1,
-    padding: 10,
   },
 });
-
-export default FlashCamera;
