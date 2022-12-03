@@ -3,17 +3,22 @@ import Paho from 'paho-mqtt';
 import {useState, useEffect} from 'react';
 import {StyleSheet, Text, Button, View} from 'react-native';
 
+// client = new Paho.Client(
+//   'broker.hivemq.com',
+//   Number(8000),
+//   `mqtt-async-test-${parseInt(Math.random() * 100)}`,
+// );
 client = new Paho.Client(
-  'broker.hivemq.com',
-  Number(8000),
+  'broker.emqx.io',
+  Number(8083),
   `mqtt-async-test-${parseInt(Math.random() * 100)}`,
 );
 export default function App() {
   const [value, setValue] = useState(0);
 
   function onMessage(message) {
-    if (message.destinationName === 'mqtt-async-test/value123')
-      console.log(message);
+    if (message.destinationName === 'esp32/test')
+      console.log(message.payloadString);
     setValue(parseInt(message.payloadString));
   }
 
@@ -21,7 +26,7 @@ export default function App() {
     client.connect({
       onSuccess: () => {
         console.log('Connected!');
-        client.subscribe('mqtt-async-test/value123');
+        client.subscribe('esp32/test');
         client.onMessageArrived = onMessage;
       },
       onFailure: () => {
@@ -32,7 +37,7 @@ export default function App() {
 
   function changeValue(c) {
     const message = new Paho.Message((value + 1).toString());
-    message.destinationName = 'mqtt-async-test/value123';
+    message.destinationName = 'esp32/test';
     c.send(message);
   }
 
