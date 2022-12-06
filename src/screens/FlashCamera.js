@@ -2,15 +2,16 @@ import Paho from 'paho-mqtt';
 
 import {useState, useEffect} from 'react';
 import {StyleSheet, Text, Button, View} from 'react-native';
+import {WebView} from 'react-native-webview';
 
 client = new Paho.Client(
-  'broker.hivemq.com',
-  Number(8000),
-  `mqtt-async-test-${parseInt(Math.random() * 100)}`,
+  'broker.hivemq.com', //host connect ws
+  Number(8000), //port
+  `mqtt-async-test-${parseInt(Math.random() * 100)}`, //client id
 );
 export default function App() {
   const [value, setValue] = useState(0);
-
+  console.log(client);
   function onMessage(message) {
     if (message.destinationName === 'mqtt-async-test/value123')
       console.log(message);
@@ -37,13 +38,18 @@ export default function App() {
   }
 
   return (
-    <View style={styles.container}>
-      <Text>Value is: {value}</Text>
-      <Button
-        onPress={() => {
-          changeValue(client);
+    <View style={{flex: 1, flexDirection: 'column'}}>
+      <Text>Show webview</Text>
+      <WebView
+        source={{
+          uri: 'https://file-examples.com/wp-content/uploads/2017/04/file_example_MP4_480_1_5MG.mp4',
         }}
-        title="Press Me"
+        style={{
+          marginTop: 20,
+          maxHeight: 300,
+          width: '100%',
+          flex: 1,
+        }}
       />
     </View>
   );
