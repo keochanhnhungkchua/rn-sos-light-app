@@ -15,19 +15,25 @@ client = new Paho.Client(
   Number(8083),
   `mqtt-async-test-${parseInt(Math.random() * 100)}`,
 );
+const UP = 2;
+const DOWN = 1;
+const LEFT = 3;
+const RIGHT = 4;
+const STOP = 0;
 export default function App() {
-  const [value, setValue] = useState(0);
+  const [value, setValue] = useState('off');
 
   function onMessage(message) {
     if (message.destinationName === 'esp32/test123')
       console.log(message.payloadString);
-    setValue(parseInt(message.payloadString));
+    setValue(message.payloadString);
   }
-
+  const [connectToServer, setConnectToServer] = useState('no connect !');
   useEffect(() => {
     client.connect({
       onSuccess: () => {
         console.log('Connected!');
+        setConnectToServer('Connected!');
         client.subscribe('esp32/test123');
         client.onMessageArrived = onMessage;
       },
@@ -42,7 +48,7 @@ export default function App() {
     message.destinationName = 'esp32/test123';
     c.send(message);
   }
-  const uriCam = 'http://192.168.1.8/jpg';
+  const uriCam = 'http://192.168.1.8:81/stream';
   const uriCamRTSP = 'rtsp://192.168.1.8:8554/mjpeg/1';
 
   return (
@@ -53,41 +59,60 @@ export default function App() {
           height: 300,
           backgroundColor: 'blue',
         }}>
-        <Text>esp32 cam ip : http://192.168.1.8</Text>
+        <Text style={{color: 'white', marginTop: 5, paddingLeft: 5}}>
+          connect to sever : {connectToServer}
+        </Text>
         <WebView
           source={{
-            uri: 'http://192.168.1.8',
+            uri: uriCam,
             // uri: 'https://file-examples.com/wp-content/uploads/2017/04/file_example_MP4_480_1_5MG.mp4',
           }}
           style={{
-            marginTop: 20,
+            marginTop: 10,
             maxHeight: 300,
             width: '100%',
             flex: 1,
             backgroundColor: 'red',
           }}
+          onHttpError={syntheticEvent => {
+            const {nativeEvent} = syntheticEvent;
+            console.warn(
+              'WebView received error status code: ',
+              nativeEvent.statusCode,
+            );
+          }}
         />
       </View>
-      <Text>Value is: {value}</Text>
+      <Text>Status: {value}</Text>
 
       <View>
         <View style={{marginLeft: 60}}>
-          <MaterialCommunityIcons
-            name="arrow-up-thick"
-            color="black"
-            size={40}
-            onPress={() => {
-              changeValue(client, 'up');
+          <Pressable
+            onPressIn={() => {
+              changeValue(client, UP); //up
             }}
-          />
+            onPressOut={() => {
+              changeValue(client, STOP); //stop
+            }}>
+            <MaterialCommunityIcons
+              name="arrow-up-thick"
+              // color={({pressed}) => {
+              //   const data = pressed ? 'red' : 'black';
+              //   console.log(data);
+              //   // return data;
+              // }}
+              color="black"
+              size={40}
+            />
+          </Pressable>
         </View>
         <View style={{flexDirection: 'row', gap: 40, marginTop: 20}}>
           <Pressable
             onPressIn={() => {
-              changeValue(client, 'left');
+              changeValue(client, LEFT);
             }}
             onPressOut={() => {
-              changeValue(client, 'off');
+              changeValue(client, STOP);
             }}>
             <MaterialCommunityIcons
               name="arrow-left-thick"
@@ -95,24 +120,33 @@ export default function App() {
               size={40}
             />
           </Pressable>
-
-          <MaterialCommunityIcons
-            name="arrow-down-thick"
-            color="black"
-            size={40}
+          <Pressable
             style={{paddingHorizontal: 20}}
-            onPress={() => {
-              changeValue(client, 'down');
+            onPressIn={() => {
+              changeValue(client, DOWN);
             }}
-          />
-          <MaterialCommunityIcons
-            name="arrow-right-thick"
-            color="black"
-            size={40}
-            onPress={() => {
-              changeValue(client, 'right');
+            onPressOut={() => {
+              changeValue(client, STOP);
+            }}>
+            <MaterialCommunityIcons
+              name="arrow-down-thick"
+              color="black"
+              size={40}
+            />
+          </Pressable>
+          <Pressable
+            onPressIn={() => {
+              changeValue(client, RIGHT);
             }}
-          />
+            onPressOut={() => {
+              changeValue(client, STOP);
+            }}>
+            <MaterialCommunityIcons
+              name="arrow-right-thick"
+              color="black"
+              size={40}
+            />
+          </Pressable>
         </View>
       </View>
     </View>
